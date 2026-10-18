@@ -1,0 +1,152 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/localyard/localyard-vscode/schemas/yard.schema.json",
+  "title": "yard.toml",
+  "description": "What a Localyard project needs: runtimes, services, processes, env and how its site is served. yard.local.toml is layered on top for machine-specific overrides.",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "version": {
+      "type": "string",
+      "description": "A version like \"8.4\" or \"22\"."
+    },
+    "service": {
+      "description": "`true` to enable, a version like \"16\", or a table with a version and databases.",
+      "anyOf": [
+        { "type": "boolean" },
+        { "type": "string" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "version": { "type": "string", "description": "Server version." },
+            "databases": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "Databases to create on first start (mysql and postgres only)."
+            }
+          }
+        }
+      ]
+    },
+    "commands": {
+      "description": "One shell command, or a list run in order.",
+      "anyOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" } }]
+    }
+  },
+  "properties": {
+    "yard": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Format version of this file. Newer formats need a newer Localyard."
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*$",
+      "description": "The project's name; the site is served at <name>.test. No dots: set `domain` for a custom domain."
+    },
+    "https": {
+      "type": "boolean",
+      "default": false,
+      "description": "Serve the site over HTTPS with a locally trusted certificate."
+    },
+    "domain": {
+      "type": "string",
+      "description": "A custom domain instead of <name>.test."
+    },
+    "runtimes": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Language versions the project runs with. Localyard installs missing ones.",
+      "properties": {
+        "php": { "$ref": "#/definitions/version" },
+        "node": { "$ref": "#/definitions/version" },
+        "go": { "$ref": "#/definitions/version" },
+        "rust": { "$ref": "#/definitions/version" },
+        "python": { "$ref": "#/definitions/version" },
+        "bun": { "$ref": "#/definitions/version" },
+        "deno": { "$ref": "#/definitions/version" },
+        "java": { "$ref": "#/definitions/version" },
+        "zig": { "$ref": "#/definitions/version" },
+        "ruby": { "$ref": "#/definitions/version" },
+        "dotnet": { "$ref": "#/definitions/version" }
+      }
+    },
+    "services": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Machine-wide services the project uses. They start with the project.",
+      "properties": {
+        "mysql": { "$ref": "#/definitions/service" },
+        "postgres": { "$ref": "#/definitions/service" },
+        "postgresql": { "$ref": "#/definitions/service" },
+        "redis": { "$ref": "#/definitions/service" },
+        "mongodb": { "$ref": "#/definitions/service" },
+        "mongo": { "$ref": "#/definitions/service" },
+        "mailpit": { "$ref": "#/definitions/service" }
+      }
+    },
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "How the site is served.",
+      "properties": {
+        "kind": {
+          "enum": ["php", "proxy", "static", "docker"],
+          "description": "php: PHP-FPM from `root`. proxy: forward to a process. static: files from `root`. docker: a compose service."
+        },
+        "root": { "type": "string", "description": "php/static: document root, relative to the project (e.g. \"public\")." },
+        "proxy": { "type": "string", "description": "proxy: the [processes.*] entry that receives traffic." }
+      }
+    },
+    "processes": {
+      "type": "object",
+      "description": "Long-running commands (dev servers, queue workers) supervised by Localyard.",
+      "propertyNames": { "pattern": "^[A-Za-z0-9_][A-Za-z0-9_-]{0,63}$" },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run"],
+        "properties": {
+          "run": { "type": "string", "minLength": 1, "description": "Shell command, run with `sh -c` in the project folder (or `cwd`)." },
+          "restart": {
+            "enum": ["always", "on-failure", "never"],
+            "default": "never",
+            "description": "When to restart it after it exits."
+          },
+          "port": {
+            "description": "Exported as $PORT. \"auto\" picks a free port and keeps it.",
+            "anyOf": [{ "type": "integer", "minimum": 1, "maximum": 65535 }, { "const": "auto" }]
+          },
+          "cwd": { "type": "string", "description": "Working directory, relative to the project folder." }
+        }
+      }
+    },
+    "env": {
+      "type": "object",
+      "description": "Environment variables for processes, `yard run` and `yard shell`. Values may use ${VAR} to refer to earlier ones and Localyard's (DB_PORT, PORT, ...).",
+      "propertyNames": { "pattern": "^[A-Za-z_][A-Za-z0-9_]*$" },
+      "additionalProperties": { "type": ["string", "number", "boolean"] }
+    },
+    "hooks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "setup": {
+          "$ref": "#/definitions/commands",
+          "description": "Runs on the first `yard up` and on `yard setup` (e.g. composer install, migrations)."
+        }
+      }
+    },
+    "docker": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Only with web.kind = \"docker\".",
+      "properties": {
+        "service": { "type": "string", "description": "Compose service that serves the site." },
+        "port": { "type": "integer", "minimum": 1, "maximum": 65535, "description": "Host port to proxy to." },
+        "compose": { "type": "string", "description": "Compose file, relative to the project. Unset finds compose.yaml or docker-compose.yml." }
+      }
+    }
+  }
+}

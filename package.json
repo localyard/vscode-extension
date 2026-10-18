@@ -1,0 +1,178 @@
+{
+  "name": "localyard",
+  "displayName": "Localyard",
+  "description": "Start, stop and watch your Localyard sites, processes and services without leaving VS Code.",
+  "version": "0.1.0",
+  "publisher": "localyard",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "icon": "media/icon.png",
+  "homepage": "https://github.com/localyard/localyard",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/localyard/localyard-vscode"
+  },
+  "bugs": {
+    "url": "https://github.com/localyard/localyard/issues"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "localyard",
+    "yard",
+    "local development",
+    "php",
+    "laravel",
+    "node",
+    "mysql",
+    "postgresql",
+    "redis"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "workspaceContains:yard.toml"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In a folder you haven't trusted, Localyard shows status but won't start the project, run its setup hooks or load its environment into terminals, since those run commands from its yard.toml."
+    }
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "localyard",
+          "title": "Localyard",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "localyard": [
+        {
+          "id": "localyard.projects",
+          "name": "Projects"
+        },
+        {
+          "id": "localyard.services",
+          "name": "Services"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "localyard.projects",
+        "contents": "Localyard needs its `yard` command line tool.\n[Install yard](command:localyard.installCli)\nOr install the [Localyard app](https://github.com/localyard/localyard/releases/latest), which includes it.",
+        "when": "localyard.cliMissing"
+      },
+      {
+        "view": "localyard.projects",
+        "contents": "No projects yet. Create a yard.toml to describe this folder's runtimes, services and processes.\n[Create yard.toml](command:localyard.init)",
+        "when": "!localyard.cliMissing && localyard.ready"
+      }
+    ],
+    "commands": [
+      { "command": "localyard.refresh", "title": "Refresh", "category": "Localyard", "icon": "$(refresh)" },
+      { "command": "localyard.installCli", "title": "Install the yard Command", "category": "Localyard" },
+      { "command": "localyard.up", "title": "Start Project", "category": "Localyard", "icon": "$(play)" },
+      { "command": "localyard.down", "title": "Stop Project", "category": "Localyard", "icon": "$(debug-stop)" },
+      { "command": "localyard.restart", "title": "Restart Project", "category": "Localyard", "icon": "$(debug-restart)" },
+      { "command": "localyard.setup", "title": "Run Setup Hooks", "category": "Localyard" },
+      { "command": "localyard.openSite", "title": "Open Site", "category": "Localyard", "icon": "$(globe)" },
+      { "command": "localyard.share", "title": "Share Site Publicly", "category": "Localyard", "icon": "$(radio-tower)" },
+      { "command": "localyard.logs", "title": "Show Logs", "category": "Localyard", "icon": "$(output)" },
+      { "command": "localyard.stopLogs", "title": "Stop Following Logs", "category": "Localyard" },
+      { "command": "localyard.usePhp", "title": "Switch PHP Version", "category": "Localyard" },
+      { "command": "localyard.useNode", "title": "Switch Node Version", "category": "Localyard" },
+      { "command": "localyard.init", "title": "Create yard.toml", "category": "Localyard" },
+      { "command": "localyard.doctor", "title": "Run Doctor", "category": "Localyard", "icon": "$(pulse)" },
+      { "command": "localyard.projectActions", "title": "Project Actions...", "category": "Localyard" },
+      { "command": "localyard.processLogs", "title": "Show Process Logs", "category": "Localyard", "icon": "$(output)" },
+      { "command": "localyard.serviceStart", "title": "Start Service", "category": "Localyard", "icon": "$(play)" },
+      { "command": "localyard.serviceStop", "title": "Stop Service", "category": "Localyard", "icon": "$(debug-stop)" },
+      { "command": "localyard.serviceRestart", "title": "Restart Service", "category": "Localyard", "icon": "$(debug-restart)" },
+      { "command": "localyard.serviceInstall", "title": "Install Service", "category": "Localyard", "icon": "$(cloud-download)" }
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "localyard.processLogs", "when": "false" },
+        { "command": "localyard.serviceStart", "when": "false" },
+        { "command": "localyard.serviceStop", "when": "false" },
+        { "command": "localyard.serviceRestart", "when": "false" },
+        { "command": "localyard.serviceInstall", "when": "false" }
+      ],
+      "view/title": [
+        { "command": "localyard.refresh", "when": "view == localyard.projects", "group": "navigation@1" },
+        { "command": "localyard.doctor", "when": "view == localyard.projects", "group": "navigation@2" },
+        { "command": "localyard.refresh", "when": "view == localyard.services", "group": "navigation@1" }
+      ],
+      "view/item/context": [
+        { "command": "localyard.up", "when": "viewItem =~ /^project\\.(stopped|error)/", "group": "inline@1" },
+        { "command": "localyard.openSite", "when": "viewItem =~ /^project\\.running/", "group": "inline@1" },
+        { "command": "localyard.restart", "when": "viewItem =~ /^project\\.(running|starting)/", "group": "inline@2" },
+        { "command": "localyard.down", "when": "viewItem =~ /^project\\.(running|starting)/", "group": "inline@3" },
+        { "command": "localyard.up", "when": "viewItem =~ /^project\\./", "group": "1_run@1" },
+        { "command": "localyard.restart", "when": "viewItem =~ /^project\\./", "group": "1_run@2" },
+        { "command": "localyard.down", "when": "viewItem =~ /^project\\./", "group": "1_run@3" },
+        { "command": "localyard.setup", "when": "viewItem =~ /^project\\./", "group": "1_run@4" },
+        { "command": "localyard.openSite", "when": "viewItem =~ /^project\\./", "group": "2_site@1" },
+        { "command": "localyard.share", "when": "viewItem =~ /^project\\./", "group": "2_site@2" },
+        { "command": "localyard.logs", "when": "viewItem =~ /^project\\./", "group": "2_site@3" },
+        { "command": "localyard.usePhp", "when": "viewItem =~ /^project\\./", "group": "3_runtime@1" },
+        { "command": "localyard.useNode", "when": "viewItem =~ /^project\\./", "group": "3_runtime@2" },
+        { "command": "localyard.processLogs", "when": "viewItem =~ /^process/", "group": "inline" },
+        { "command": "localyard.serviceStart", "when": "viewItem =~ /^service\\.(stopped|error)/", "group": "inline" },
+        { "command": "localyard.serviceRestart", "when": "viewItem == service.running", "group": "inline@1" },
+        { "command": "localyard.serviceStop", "when": "viewItem == service.running", "group": "inline@2" },
+        { "command": "localyard.serviceInstall", "when": "viewItem == service.not_installed", "group": "inline" }
+      ]
+    },
+    "configuration": {
+      "title": "Localyard",
+      "properties": {
+        "localyard.yardPath": {
+          "type": "string",
+          "default": "",
+          "scope": "machine",
+          "description": "Full path to the `yard` command. Leave empty to find it on your PATH or in ~/.localyard/bin."
+        },
+        "localyard.terminalEnvironment": {
+          "type": "boolean",
+          "default": true,
+          "description": "Give new terminals the project's environment: its PHP, Node and other runtimes on PATH, and the variables from yard.toml, like `yard shell`."
+        },
+        "localyard.statusBar": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show this folder's project and its status in the status bar."
+        }
+      }
+    },
+    "tomlValidation": [
+      {
+        "fileMatch": ["yard.toml", "yard.local.toml"],
+        "url": "./schemas/yard.schema.json"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "watch": "node esbuild.mjs --watch",
+    "typecheck": "tsc --noEmit",
+    "vscode:prepublish": "npm run typecheck && node esbuild.mjs --production",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "@types/vscode": "1.90.0",
+    "@vscode/vsce": "^3.2.0",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.6.0"
+  }
+}
